@@ -17,6 +17,7 @@
 		85A8E3741E9893FA00133A75 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85A8E3721E9893FA00133A75 /* LaunchScreen.storyboard */; };
 		85A8E37F1E9893FA00133A75 /* AnnuvinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A8E37E1E9893FA00133A75 /* AnnuvinTests.swift */; };
 		85A8E38A1E9893FA00133A75 /* AnnuvinUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A8E3891E9893FA00133A75 /* AnnuvinUITests.swift */; };
+		85A8E3981E98947700133A75 /* MyTileSet.sks in Resources */ = {isa = PBXBuildFile; fileRef = 85A8E3971E98947700133A75 /* MyTileSet.sks */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +54,7 @@
 		85A8E3851E9893FA00133A75 /* AnnuvinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnuvinUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		85A8E3891E9893FA00133A75 /* AnnuvinUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnuvinUITests.swift; sourceTree = "<group>"; };
 		85A8E38B1E9893FA00133A75 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		85A8E3971E98947700133A75 /* MyTileSet.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = MyTileSet.sks; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 				85A8E3701E9893FA00133A75 /* Assets.xcassets */,
 				85A8E3721E9893FA00133A75 /* LaunchScreen.storyboard */,
 				85A8E3751E9893FA00133A75 /* Info.plist */,
+				85A8E3971E98947700133A75 /* MyTileSet.sks */,
 			);
 			path = Annuvin;
 			sourceTree = "<group>";
@@ -244,6 +247,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85A8E3981E98947700133A75 /* MyTileSet.sks in Resources */,
 				85A8E36F1E9893FA00133A75 /* Main.storyboard in Resources */,
 				85A8E3661E9893FA00133A75 /* GameScene.sks in Resources */,
 				85A8E3711E9893FA00133A75 /* Assets.xcassets in Resources */,
