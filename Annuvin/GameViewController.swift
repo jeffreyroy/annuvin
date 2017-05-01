@@ -19,11 +19,31 @@ class GameViewController: UIViewController {
             // Load the SKScene from 'GameScene.sks'
             if let scene = SKScene(fileNamed: "GameScene") {
                 // Set the scale mode to scale to fit the window
-                scene.scaleMode = .aspectFill
+//                scene.scaleMode = .aspectFill
+                let king = GamePiece("King")
+                let pawn = GamePiece("Pawn", image: "pawnNode")
                 
+                
+                let hexBoardNode = scene.childNode(withName: "hexBoard")
+                if let hexBoard = hexBoardNode as? SKTileMapNode {
+                    let board = GameBoard(node: hexBoard)
+                }
+                else {
+                    fatalError("No board found!")
+                }
+                
+                let blurbNode = scene.childNode(withName: "blurb")
+                if let blurb = blurbNode as? SKLabelNode {
+                    blurb.text = pawn.image
+                }
+                else {
+                    fatalError("No blurb found!")
+                }
                 // Present the scene
                 view.presentScene(scene)
+                
             }
+            
             
             view.ignoresSiblingOrder = true
             
