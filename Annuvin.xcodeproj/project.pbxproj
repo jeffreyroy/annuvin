@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		85837E152027E60000BCDB51 /* GameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85837E142027E60000BCDB51 /* GameModel.swift */; };
 		859E8BD91EB7C88500D65E6B /* GameBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 859E8BD81EB7C88500D65E6B /* GameBoard.swift */; };
 		859E8BDB1EB7D04200D65E6B /* isometric.sks in Resources */ = {isa = PBXBuildFile; fileRef = 859E8BDA1EB7D04200D65E6B /* isometric.sks */; };
 		85A8E3641E9893FA00133A75 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85A8E3631E9893FA00133A75 /* AppDelegate.swift */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		85837E142027E60000BCDB51 /* GameModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModel.swift; sourceTree = "<group>"; };
 		859E8BD81EB7C88500D65E6B /* GameBoard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameBoard.swift; sourceTree = "<group>"; };
 		859E8BDA1EB7D04200D65E6B /* isometric.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = isometric.sks; sourceTree = "<group>"; };
 		85A8E3601E9893FA00133A75 /* Annuvin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Annuvin.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -121,6 +123,7 @@
 				85A8E3971E98947700133A75 /* MyTileSet.sks */,
 				859E8BD81EB7C88500D65E6B /* GameBoard.swift */,
 				859E8BDA1EB7D04200D65E6B /* isometric.sks */,
+				85837E142027E60000BCDB51 /* GameModel.swift */,
 			);
 			path = Annuvin;
 			sourceTree = "<group>";
@@ -287,6 +290,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85837E152027E60000BCDB51 /* GameModel.swift in Sources */,
 				859E8BD91EB7C88500D65E6B /* GameBoard.swift in Sources */,
 				85A8E36A1E9893FA00133A75 /* GameScene.swift in Sources */,
 				85A8E36C1E9893FA00133A75 /* GameViewController.swift in Sources */,

@@ -6,10 +6,12 @@
 //  Copyright © 2017 Jeffrey Roy. All rights reserved.
 //
 
+// Structure representing a grid-based game board
 import Foundation
 import SpriteKit
 import GameplayKit
 
+// Structure representing of piece from one location to another
 struct GameMove {
     var from: [Int]?
     var to: [Int]?
@@ -45,6 +47,7 @@ class GamePiece {
         self.image = image == nil ? name + ".png" : image!
     }
     func legalMoves() -> [GameMove] {
+        // Customize for specific game
         return []
     }
 }
