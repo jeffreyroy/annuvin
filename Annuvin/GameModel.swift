@@ -9,13 +9,45 @@
 import Foundation
 import GameplayKit
 
+/// 1. Structures
+// Structure to represent board space using x and y coordinates
+struct BoardSpace {
+    public var x: Int
+    public var y: Int
+}
 
-// Minmax strategist
-//class AnnuvinStrategist: GKMinmaxStrategist {
-//    var max​Look​Ahead​Depth = 20
-//}
+// Vector addition
+extension BoardSpace {
+    public init(_ x: Int, _ y: Int) {
+        self.init(x: x, y: y)
+    }
+    public static func + (left: BoardSpace, right: BoardSpace) -> BoardSpace {
+        return BoardSpace(x: left.x + right.x, y: left.y + right.y)
+    }
+    public func distance(_ target: BoardSpace) -> Int {
+        let yDiff: Int = self.y - target.y
+        let xDiff: Int = self.x - target.x
+        let a: Int = abs(xDiff + yDiff)
+        let b: Int = abs(xDiff)
+        let c: Int = abs(yDiff)
+        let result: Int = ( a + b + c) / 2
+        return result
+    }
+}
 
-let totalPieces = 4
+// Structure to represent move from one space to another
+struct Move {
+    public var from: BoardSpace
+    public var to: BoardSpace
+}
+
+extension Move {
+    public init(_ from: Int, _ to: Int) {
+        self.init(from: from, to: to)
+    }
+}
+
+/// 2 Text display of board (for testing)
 let symbols: [Character] = ["-", ".", "X", "O"]
 let initialBoard: [String] = [
     "- - O O O",
@@ -26,6 +58,7 @@ let initialBoard: [String] = [
 ]
 
 // Convert initial board representation into array of integers
+// for use when initializing a new game
 // 0 = human
 // 1 = computer
 // -1 = empty
@@ -47,7 +80,7 @@ func convertBoardBack(_ intArray: [[Int]]) -> [String] {
     return charArray.map { $0.joined(separator: " ") }
 }
 
-// Print text representation of position, for testing purposes
+// Display text representation of position, for testing purposes
 func printBoard(_ position: [String]) {
     for (i, row) in position.enumerated() {
         let initialSpace = Array(repeating: " ", count: i).joined()
@@ -56,17 +89,18 @@ func printBoard(_ position: [String]) {
     }
 }
 
-// Game model
+/// 3. Game model
 class AnnuvinModel: NSObject, GKGameModel {
+    let totalPieces = 4
     let players: [GKGameModelPlayer]?
     var activePlayer: GKGameModelPlayer?
     var piecesLeft: [Int]  // Number of pieces left for each player
-    var movingPiece: [Int]?  // Active piece, if one player is mid move
+    var movingPiece: BoardSpace?  // Active piece, if one player is mid move
     var movesLeft: Int  // Number of moves left for active piece
 
-    var position: [[Int]]  // Store position as array of piles
+    var position: [[Int]]  // Store board position as 2d array
     
-    // Initialize new game
+    // Initialize new game state
     init(position: [[Int]], players: [GKGameModelPlayer]?) {
         //        assert(players?.count != 2, "Error:  Exactly two players required.")
         if players?.count != 2 {
@@ -110,17 +144,51 @@ class AnnuvinModel: NSObject, GKGameModel {
         return piecesLeft[player.playerId]
     }
     
-    func piecesFor(_ player: GKGameModelPlayer) -> [[Int]] {
-        var result: [[Int]] = []
+    // Get list of pieces for a player
+    func piecesFor(_ player: GKGameModelPlayer) -> [BoardSpace] {
+        var result: [BoardSpace] = []
+        // Fill this in
+        for (y, row) in position.enumerated() {
+            for (x, value) in row.enumerated() {
+                if value == player.playerId {
+                    result.append( BoardSpace(x, y) )
+                }
+            }
+        }
         return result
     }
     
     //  Return list of available moves
     //  Move = [from, to], where from and to are board locations
     func gameModelUpdates(for player: GKGameModelPlayer) -> [GKGameModelUpdate]? {
-        var result: [AnnuvinUpdate] = []
+        // Fill this in
+    }
+    
+    func getMoves(for player: GKGameModelPlayer) -> [Move] {
+        let p = activePlayer!
+        var result: [Move] = []
+        let pieces = piecesFor(p)
+        if movingPiece != nil {
+            result = getPieceMoves(movingPiece!, true)
+        }
+        else {
+            for piece in pieces {
+                result += getPieceMoves(piece, false)
+            }
+        }
         // Fill this in
         return result
+    }
+    
+    func getPieceMoves(_ piece: BoardSpace, _ capturesOnly: Bool) -> [Move] {
+        // Fill this in
+        return []
+    }
+
+    // Get total moves available to player based on number of pieces left
+    func totalMoves() -> Int {
+        let p = activePlayer!
+        return 1 + totalPieces - piecesLeft[p.playerId]
     }
     
     // Heuristic score = difference in number of pieces
@@ -163,10 +231,9 @@ class AnnuvinModel: NSObject, GKGameModel {
             self.movingPiece = model.movingPiece
         }
     }
-    
 }
 
-// Player model
+/// 4.  Player model
 class AnnuvinPlayer: NSObject, GKGameModelPlayer {
     let playerId: Int
     init(_ p: Int) {
@@ -174,15 +241,13 @@ class AnnuvinPlayer: NSObject, GKGameModelPlayer {
     }
 }
 
-// Update class representing Annuvin move
+/// 5.  Update class representing Annuvin move
 class AnnuvinUpdate: NSObject, GKGameModelUpdate {
     var value: Int = 0  // Desirability of move
-    var from: [Int]
-    var to: [Int]
-    init(_ f: [Int], _ t: [Int]) {
-        from = f
-        to = t
+    var move: Move
+    init(_ m: Move) {
+        move = m
     }
-    override var description: String { return "From \(from) to \(to)" }
+    override var description: String { return "From \(move.from.y) \(move.from.x) to \(move.to.y) \(move.to.x)" }
 }
 
