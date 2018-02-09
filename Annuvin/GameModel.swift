@@ -11,7 +11,7 @@ import GameplayKit
 
 /// 1. Structures
 // Structure to represent board space using x and y coordinates
-struct BoardSpace {
+public struct BoardSpace {
     public var x: Int
     public var y: Int
 }
@@ -21,8 +21,11 @@ extension BoardSpace {
     public init(_ x: Int, _ y: Int) {
         self.init(x: x, y: y)
     }
-    public static func + (left: BoardSpace, right: BoardSpace) -> BoardSpace {
-        return BoardSpace(x: left.x + right.x, y: left.y + right.y)
+//    public static func + (left: BoardSpace, right: BoardSpace) -> BoardSpace {
+//        return BoardSpace(x: left.x + right.x, y: left.y + right.y)
+//    }
+    public static func == (left: BoardSpace, right: BoardSpace) -> Bool {
+        return left.x == right.x && left.y == right.y
     }
     public func distance(_ target: BoardSpace) -> Int {
         let yDiff: Int = self.y - target.y
@@ -36,14 +39,14 @@ extension BoardSpace {
 }
 
 // Structure to represent move from one space to another
-struct Move {
+public struct Move {
     public var from: BoardSpace
     public var to: BoardSpace
 }
 
 extension Move {
-    public init(_ from: Int, _ to: Int) {
-        self.init(from: from, to: to)
+    public init(_ f: BoardSpace, _ t: BoardSpace) {
+        self.init(from: f, to: t)
     }
 }
 
@@ -110,7 +113,7 @@ class AnnuvinModel: NSObject, GKGameModel {
         self.position = position
         self.piecesLeft = [totalPieces, totalPieces]
         self.movingPiece = nil
-        self.movesLeft = 0
+        self.movesLeft = 1
         self.activePlayer = players!.first
     }
     
@@ -147,9 +150,10 @@ class AnnuvinModel: NSObject, GKGameModel {
     // Get list of pieces for a player
     func piecesFor(_ player: GKGameModelPlayer) -> [BoardSpace] {
         var result: [BoardSpace] = []
-        // Fill this in
+        // Loop through board positions
         for (y, row) in position.enumerated() {
             for (x, value) in row.enumerated() {
+                // If it's a piece, add it to the list
                 if value == player.playerId {
                     result.append( BoardSpace(x, y) )
                 }
@@ -158,37 +162,64 @@ class AnnuvinModel: NSObject, GKGameModel {
         return result
     }
     
-    //  Return list of available moves
-    //  Move = [from, to], where from and to are board locations
+    // Convert list of moves in to list of model updates
     func gameModelUpdates(for player: GKGameModelPlayer) -> [GKGameModelUpdate]? {
-        // Fill this in
+        // Return nil if game is over
+        if isOver(for: player) { return nil }
+        let moves: [Move] = getMoves(for: player)
+        // Return nil if no moves available
+        if moves.isEmpty { return nil }
+        // Otherwise, convert moves into model updates
+        return moves.map { AnnuvinUpdate($0) }
     }
     
+    //  Return list of available moves for a player
+    //  Move = [from, to], where from and to are board locations
     func getMoves(for player: GKGameModelPlayer) -> [Move] {
-        let p = activePlayer!
         var result: [Move] = []
-        let pieces = piecesFor(p)
+        let pieces = piecesFor(player)
+        // Check whether player is mid-move
         if movingPiece != nil {
-            result = getPieceMoves(movingPiece!, true)
+            // If so, continue moving same piece
+            result = getPieceMoves(player, movingPiece!, true)
         }
         else {
+            // If not, loop through all pieces for that player
             for piece in pieces {
-                result += getPieceMoves(piece, false)
+                result += getPieceMoves(player, piece, false)
             }
         }
-        // Fill this in
         return result
     }
     
-    func getPieceMoves(_ piece: BoardSpace, _ capturesOnly: Bool) -> [Move] {
-        // Fill this in
-        return []
+    // Get list of legal moves for a specific piece
+    func getPieceMoves(_ player: GKGameModelPlayer, _ piece: BoardSpace, _ capturesOnly: Bool) -> [Move] {
+        var destinations: [BoardSpace] = []
+        // Loop through all spaces on board
+        for (y, row) in position.enumerated() {
+            for (x, value) in row.enumerated() {
+                // Check whether destination is in range
+                if piece.distance(BoardSpace(x, y)) <= totalMoves(player) {
+                    // Check whether destination is legal
+                    if (value == opponent(player)!.playerId || (value == -1 && !capturesOnly)) {
+                        destinations.append( BoardSpace(x, y) )
+                    }
+                }
+            }
+        }
+        // Convert destinations into list of moves
+        let result = destinations.map { Move(piece, $0) }
+        return result
     }
 
-    // Get total moves available to player based on number of pieces left
-    func totalMoves() -> Int {
-        let p = activePlayer!
-        return 1 + totalPieces - piecesLeft[p.playerId]
+    // Get total moves available to player
+    func totalMoves(_ player: GKGameModelPlayer) -> Int {
+        // If a piece is currently mid-move, return stored number
+        if player.playerId == activePlayer!.playerId && movingPiece != nil {
+            return movesLeft
+        }
+        // Otherwise, return number based on pieces remaining
+        return 1 + totalPieces - piecesLeft[player.playerId]
     }
     
     // Heuristic score = difference in number of pieces
@@ -207,28 +238,67 @@ class AnnuvinModel: NSObject, GKGameModel {
         return numPieces(opponent(player)!) == 0
     }
     
-    //  Make move
-    func apply(_ gameModelUpdate: GKGameModelUpdate) {
-        let move = gameModelUpdate as! AnnuvinUpdate
-        // print("Considering \(move)", terminator: "")
-        // Fill this in
-        togglePlayer()
+    func isOver(for player: GKGameModelPlayer) -> Bool {
+        return isLoss(for: player) || isWin(for: player)
     }
     
-    //  Undo move
-    func unapplyGameModelUpdate(_ gameModelUpdate: GKGameModelUpdate) {
-        let move = gameModelUpdate as! AnnuvinUpdate
-        // Fill this in
-        togglePlayer()
+    
+    //  Update position to reflect move, return true if capture
+    func movePiece(_ move: Move) -> Bool {
+        let piece = move.from
+        let dest = move.to
+        let destValue = position[dest.y][dest.x]
+        let pieceValue = position[piece.y][piece.x]
+        assert(pieceValue >= 0, "Trying to move non-existent piece!")
+        assert(pieceValue != destValue, "Trying to capture own piece!")
+        assert(destValue != -2, "Trying to move off the board!")
+        // Move the piece
+        position[piece.y][piece.x] = -1
+        position[dest.y][dest.x] = pieceValue
+        // If capture, reduce number of piece by 1
+        if( destValue == 0 || destValue == 1 ) {
+            piecesLeft[destValue] -= 1
+        }
+        return destValue != -1
     }
+
+    
+    // Apply state update
+    func apply(_ gameModelUpdate: GKGameModelUpdate) {
+        // Get move
+        let update = gameModelUpdate as! AnnuvinUpdate
+        let move = update.move
+        let piece = move.from
+        let destination = move.to
+        // print("Considering \(move)", terminator: "")
+        let capture = movePiece(move)
+        // Note:  Need to check whether move is a capture
+        if capture {
+            movingPiece = destination
+            movesLeft -= piece.distance(destination)
+        }
+        else {
+            togglePlayer()
+            movingPiece = nil
+            movesLeft = totalMoves(activePlayer!)
+        }
+    }
+    
+//    //  Undo move
+//    func unapplyGameModelUpdate(_ gameModelUpdate: GKGameModelUpdate) {
+//        let move = gameModelUpdate as! AnnuvinUpdate
+//        // Fill this in
+//        togglePlayer()
+//    }
     
     //  Copy state from model
     func setGameModel(_ gameModel: GKGameModel) {
-        if let model = gameModel as? AnnuvinModel{
+        if let model = gameModel as? AnnuvinModel {
             self.position = model.position
             self.activePlayer = model.activePlayer
             self.piecesLeft = model.piecesLeft
             self.movingPiece = model.movingPiece
+            self.movesLeft = model.movesLeft
         }
     }
 }
@@ -248,6 +318,7 @@ class AnnuvinUpdate: NSObject, GKGameModelUpdate {
     init(_ m: Move) {
         move = m
     }
+    // Need function to check whether it's a capture?
     override var description: String { return "From \(move.from.y) \(move.from.x) to \(move.to.y) \(move.to.x)" }
 }
 
