@@ -9,7 +9,7 @@
 import Foundation
 import GameplayKit
 
-/// 1. Structures
+//MARK: Structures
 // Structure to represent board space using x and y coordinates
 public struct BoardSpace {
     public var x: Int
@@ -50,7 +50,7 @@ extension Move {
     }
 }
 
-/// 2 Text display of board (for testing)
+//MARK: Text display of board (for testing)
 let symbols: [Character] = ["-", ".", "X", "O"]
 let initialBoard: [String] = [
     "- - O O O",
@@ -59,6 +59,13 @@ let initialBoard: [String] = [
        ". . . X -",
         "X X X - -"
 ]
+
+// Note:  SpriteKit hex grid uses this representation :
+//  4    - O O O -
+//  3     O . . . -
+//  2    . . . . .
+//  1     . . . X -
+//  0    _ X X X -
 
 // Convert initial board representation into array of integers
 // for use when initializing a new game
@@ -92,7 +99,7 @@ func printBoard(_ position: [String]) {
     }
 }
 
-/// 3. Game model
+//MARK: Game model
 class AnnuvinModel: NSObject, GKGameModel {
     let totalPieces = 4
     let players: [GKGameModelPlayer]?
@@ -303,7 +310,7 @@ class AnnuvinModel: NSObject, GKGameModel {
     }
 }
 
-/// 4.  Player model
+//MARK:  Player model
 class AnnuvinPlayer: NSObject, GKGameModelPlayer {
     let playerId: Int
     init(_ p: Int) {
@@ -311,7 +318,7 @@ class AnnuvinPlayer: NSObject, GKGameModelPlayer {
     }
 }
 
-/// 5.  Update class representing Annuvin move
+//MARK:  Update class representing Annuvin move
 class AnnuvinUpdate: NSObject, GKGameModelUpdate {
     var value: Int = 0  // Desirability of move
     var move: Move

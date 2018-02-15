@@ -12,6 +12,8 @@ import GameplayKit
 
 class GameViewController: UIViewController {
 
+    @IBOutlet weak var gameView: SKView!
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -20,7 +22,6 @@ class GameViewController: UIViewController {
             if let scene = SKScene(fileNamed: "GameScene") {
                 // Set the scale mode to scale to fit the window
 //                scene.scaleMode = .aspectFill
-                let king = GamePiece("King")
                 let pawn = GamePiece("Pawn", image: "pawnNode")
                 
                 
@@ -34,7 +35,7 @@ class GameViewController: UIViewController {
                 
                 let blurbNode = scene.childNode(withName: "blurb")
                 if let blurb = blurbNode as? SKLabelNode {
-                    blurb.text = pawn.image
+                    blurb.text = String(describing: gameView)
                 }
                 else {
                     fatalError("No blurb found!")
