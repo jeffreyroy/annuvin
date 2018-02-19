@@ -9,35 +9,56 @@
 import SpriteKit
 import GameplayKit
 
+
 class GameScene: SKScene {
     // Use premade tile set for testing
     let tileSet = SKTileSet(named: "Sample Hexagonal Tile Set")
     var readyForInput: Bool = true
     var activePiece: SKSpriteNode? = nil
+    
     // Get touch input
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let touch = touches.first {
-            interpret(touch)
+        let touch = touches.first
+        if  touch != nil && readyForInput {
+            let node = interpret(touch!)
+            if let name = node.name {
+                // Piece touched
+                if name == "man" {
+                    let piece = node as! SKSpriteNode
+                    if activePiece == piece {
+                        deactivatePiece(piece)
+                    }
+                    activatePiece(piece)
+                }
+                // Empty board space touched
+                if name == "hexBoard" {
+                    let board = node as! SKTileMapNode
+                    if activePiece != nil {
+                        makeMove(touch!, board, activePiece!)
+                    }
+                }
+            }
         }
     }
     
-    // Figure out what is being touched
-    func interpret(_ touch: UITouch) {
-        // Find node at touch location
-       let pos = touch.location(in: self)
+    // Return node being touched
+    func interpret(_ touch: UITouch) -> SKNode {
+        let pos = touch.location(in: self)
         let selectedNode = self.atPoint(pos)
-        if let name = selectedNode.name {
-            // Piece touched
-            if name == "man" {
-                let piece = selectedNode as! SKSpriteNode
-                touchPiece(piece)
-            }
-            // Empty board space touched
-            if name == "hexBoard" {
-                let board = selectedNode as! SKTileMapNode
-                touchBoard(touch, board)
-            }
-        }
+        return selectedNode
+    }
+    
+    
+    func activatePiece(_ piece: SKSpriteNode) {
+        
+    }
+    
+    func deactivatePiece(_ piece: SKSpriteNode) {
+        
+    }
+    
+    func makeMove(_ touch: UITouch, _ board: SKTileMapNode, _ piece: SKSpriteNode) {
+    
     }
     
     // Piece touched

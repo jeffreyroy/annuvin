@@ -5,99 +5,10 @@
 //  Created by Jeffrey Roy on 2/4/18.
 //  Copyright © 2018 Jeffrey Roy. All rights reserved.
 //
+//  Game state model for GameplayKit minimax algorithm
 
 import Foundation
 import GameplayKit
-
-//MARK: Structures
-// Structure to represent board space using x and y coordinates
-public struct BoardSpace {
-    public var x: Int
-    public var y: Int
-}
-
-// Vector addition
-extension BoardSpace {
-    public init(_ x: Int, _ y: Int) {
-        self.init(x: x, y: y)
-    }
-//    public static func + (left: BoardSpace, right: BoardSpace) -> BoardSpace {
-//        return BoardSpace(x: left.x + right.x, y: left.y + right.y)
-//    }
-    public static func == (left: BoardSpace, right: BoardSpace) -> Bool {
-        return left.x == right.x && left.y == right.y
-    }
-    public func distance(_ target: BoardSpace) -> Int {
-        let yDiff: Int = self.y - target.y
-        let xDiff: Int = self.x - target.x
-        let a: Int = abs(xDiff + yDiff)
-        let b: Int = abs(xDiff)
-        let c: Int = abs(yDiff)
-        let result: Int = ( a + b + c) / 2
-        return result
-    }
-}
-
-// Structure to represent move from one space to another
-public struct Move {
-    public var from: BoardSpace
-    public var to: BoardSpace
-}
-
-extension Move {
-    public init(_ f: BoardSpace, _ t: BoardSpace) {
-        self.init(from: f, to: t)
-    }
-}
-
-//MARK: Text display of board (for testing)
-let symbols: [Character] = ["-", ".", "X", "O"]
-let initialBoard: [String] = [
-    "- - O O O",
-     "- O . . .",
-      ". . . . .",
-       ". . . X -",
-        "X X X - -"
-]
-
-// Note:  SpriteKit hex grid uses this representation :
-//  4    - O O O -
-//  3     O . . . -
-//  2    . . . . .
-//  1     . . . X -
-//  0    _ X X X -
-
-// Convert initial board representation into array of integers
-// for use when initializing a new game
-// 0 = human
-// 1 = computer
-// -1 = empty
-// -2 = out-of-bounds
-func convertBoard() -> [[Int]]{
-    let intArray: [[Int]] = initialBoard.map { Array($0.replacingOccurrences(of: " ", with: "")).map
-    { symbols.index(of: $0)! - 2 }
-    }
-    return intArray
-}
-
-// Convert board back to string array so it can be displayed
-func convertBoardBack(_ intArray: [[Int]]) -> [String] {
-    let charArray: [[String]] = intArray.map {
-        $0.map {
-            String(symbols[$0 + 2])
-        }
-    }
-    return charArray.map { $0.joined(separator: " ") }
-}
-
-// Display text representation of position, for testing purposes
-func printBoard(_ position: [String]) {
-    for (i, row) in position.enumerated() {
-        let initialSpace = Array(repeating: " ", count: i).joined()
-        print(initialSpace, terminator:"")
-        print(row.replacingOccurrences(of: "-", with: " "))
-    }
-}
 
 //MARK: Game model
 class AnnuvinModel: NSObject, GKGameModel {
@@ -169,7 +80,7 @@ class AnnuvinModel: NSObject, GKGameModel {
         return result
     }
     
-    // Convert list of moves in to list of model updates
+    // Convert list of moves into list of model updates
     func gameModelUpdates(for player: GKGameModelPlayer) -> [GKGameModelUpdate]? {
         // Return nil if game is over
         if isOver(for: player) { return nil }
