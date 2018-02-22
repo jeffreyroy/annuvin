@@ -10,8 +10,12 @@ import UIKit
 import SpriteKit
 import GameplayKit
 
-class GameViewController: UIViewController, SKSceneDelegate {
-    
+protocol GameDelegate: class {
+    func legalMoves(_ from: BoardSpace) -> [BoardSpace]
+}
+
+class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
+
     let scene = SKScene(fileNamed: "GameScene")!
     @IBOutlet weak var gameView: SKView!
     
@@ -21,7 +25,9 @@ class GameViewController: UIViewController, SKSceneDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        scene.delegate = self
+//        scene.delegate = self
+        let gameScene = scene as! GameScene
+        gameScene.gameDelegate = self
         // Initialize ai
         ai.maxLookAheadDepth = 2
         ai.gameModel = gameStart
@@ -41,14 +47,22 @@ class GameViewController: UIViewController, SKSceneDelegate {
         
     }
     
-    // Return set of legal destinations for piece
-    func getLegalDestinations(_ piece: SKSpriteNode) -> [BoardSpace] {
-        // TBA
-        return []
+    func gameState() -> AnnuvinModel {
+        return ai.gameModel as! AnnuvinModel
     }
     
-    
-    
+    // Return set of legal destinations for piece
+    func legalMoves (_ from: BoardSpace) -> [BoardSpace] {
+        let space = from.model() // Translate to model format
+        let state = gameState()
+        let player = state.activePlayer!
+        let capturesOnly = state.movingPiece != nil
+        // Get moves from model
+        let moves = state.getDestinations(player, space, capturesOnly)
+        // TBA
+        let translatedMoves = moves.map { $0.view() }
+        return translatedMoves
+    }
     
     
     override var shouldAutorotate: Bool {

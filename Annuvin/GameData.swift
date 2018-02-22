@@ -68,6 +68,10 @@ extension BoardSpace {
         return left.x == right.x && left.y == right.y
     }
     
+    public static func != (left: BoardSpace, right: BoardSpace) -> Bool {
+        return left.x != right.x || left.y != right.y
+    }
+    
     // Distance function for hex board
     public func distance(_ target: BoardSpace) -> Int {
         let yDiff: Int = self.y - target.y
@@ -80,18 +84,20 @@ extension BoardSpace {
     }
     
     // Translate between model and view format
-    func offset() -> Int {
-        var result = (y * 2 - height) / 2
+    func offset(_ row: Int) -> Int {
+        var result = (row * 2 - height) / 2
         result += (result < 0 ? -1 : 1)
         return result / 2
     }
     
     public func view() -> BoardSpace {
-        return BoardSpace( x + offset(), y )
+        let newY = height - 1 - y
+        return BoardSpace( x + offset(y), newY )
     }
     
     public func model() -> BoardSpace {
-        return BoardSpace( x - offset(), y )
+        let newY = height - 1 - y
+        return BoardSpace( x - offset(newY), newY )
     }
     
 }
@@ -107,7 +113,6 @@ extension Move {
         self.init(from: f, to: t)
     }
 }
-
 
 //MARK: Text representation of Annuvin board (for testing)
 class BoardDisplay {

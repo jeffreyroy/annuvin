@@ -37,9 +37,13 @@ class AnnuvinTests: XCTestCase {
         let a = BoardSpace(x: 0, y: 4)
         let b = BoardSpace(x: 3, y: 3)
         let c = BoardSpace(x: 0, y: 3)
+        let d = BoardSpace(x: 1, y: 0)
 
         XCTAssertEqual(a.distance(c), 1, "Distance not calculated correctly")
         XCTAssertEqual(a.distance(b), 3, "Distance not calculated correctly")
+        XCTAssertTrue(a.view() == d, "Conversion from model to view is incorrect")
+        XCTAssertTrue(d.model() == a, "Conversion from view to model is incorrect")
+
 
     }
     

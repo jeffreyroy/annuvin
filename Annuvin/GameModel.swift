@@ -112,7 +112,19 @@ class AnnuvinModel: NSObject, GKGameModel {
     
     // Get list of legal moves for a specific piece
     func getPieceMoves(_ player: GKGameModelPlayer, _ piece: BoardSpace, _ capturesOnly: Bool) -> [Move] {
+        let destinations = getDestinations(player, piece, capturesOnly)
+        // Convert destinations into list of moves
+        return destinations.map { Move(piece, $0) }
+
+    }
+    
+    func getDestinations(_ player: GKGameModelPlayer, _ piece: BoardSpace, _ capturesOnly: Bool) -> [BoardSpace] {
         var destinations: [BoardSpace] = []
+        // If mid move, check whether piece is the one
+        // currently moving; if not, return empty destinations
+        if capturesOnly && piece != movingPiece! {
+            return []
+        }
         // Loop through all spaces on board
         for (y, row) in position.enumerated() {
             for (x, value) in row.enumerated() {
@@ -125,9 +137,7 @@ class AnnuvinModel: NSObject, GKGameModel {
                 }
             }
         }
-        // Convert destinations into list of moves
-        let result = destinations.map { Move(piece, $0) }
-        return result
+        return destinations
     }
 
     // Get total moves available to player
