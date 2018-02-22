@@ -22,18 +22,22 @@ extension HexBoard {
         let width = (height > 0 ? grid[0].count : 0)
         self.init(height: height, width: width, data: grid)
     }
-    // Convert from model representation to view representation
-    func roll(_ row: [Int], _ n: Int) -> [Int] {
+    // Translate between model and view format
+    func rotate(_ row: [Int], _ n: Int) -> [Int] {
         let divider = (n>0 ? row.count-n : -n)
         let firstHalf = row[..<divider]
         let secondHalf = row[divider...]
         return Array(secondHalf) + Array(firstHalf)
     }
+    func offset(_ y: Int) -> Int {
+        var result = (y * 2 - height) / 2
+        result += (result < 0 ? -1 : 1)
+        return result / 2
+    }
     func transform(_ direction: Int) -> HexBoard {
         var newData: [[Int]] = []
         for (i, row) in data.enumerated() {
-            let offset: Int = direction * (i * 2 - height) / 2
-            newData.append(roll(row, offset))
+            newData.append(rotate(row, offset(i)))
         }
         return HexBoard(newData)
     }
@@ -47,6 +51,7 @@ extension HexBoard {
 
 // Structure to represent board space using x and y coordinates
 public struct BoardSpace {
+    let height = 5 // Dimension of Annuvin board
     public var x: Int
     public var y: Int
 }
@@ -73,6 +78,22 @@ extension BoardSpace {
         let result: Int = ( a + b + c) / 2
         return result
     }
+    
+    // Translate between model and view format
+    func offset() -> Int {
+        var result = (y * 2 - height) / 2
+        result += (result < 0 ? -1 : 1)
+        return result / 2
+    }
+    
+    public func view() -> BoardSpace {
+        return BoardSpace( x + offset(), y )
+    }
+    
+    public func model() -> BoardSpace {
+        return BoardSpace( x - offset(), y )
+    }
+    
 }
 
 // Structure to represent move from one space to another
