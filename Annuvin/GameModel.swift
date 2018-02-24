@@ -200,16 +200,25 @@ class AnnuvinModel: NSObject, GKGameModel {
         let destination = move.to
         // print("Considering \(move)", terminator: "")
         let capture = movePiece(move)
-        // Note:  Need to check whether move is a capture
+        // Check whether move is a capture
         if capture {
             movingPiece = destination
             movesLeft -= piece.distance(destination)
+            let moreMoves = getDestinations(activePlayer!, movingPiece!, true)
+            // If no more moves available, end move
+            if moreMoves.count == 0 {
+                endMove()
+            }
         }
         else {
-            togglePlayer()
-            movingPiece = nil
-            movesLeft = totalMoves(activePlayer!)
+            endMove()
         }
+    }
+    
+    func endMove() {
+        togglePlayer()
+        movingPiece = nil
+        movesLeft = totalMoves(activePlayer!)
     }
     
 //    //  Undo move

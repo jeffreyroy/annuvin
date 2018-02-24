@@ -11,7 +11,10 @@ import SpriteKit
 import GameplayKit
 
 protocol GameDelegate: class {
+    func gameState() -> AnnuvinModel
     func legalMoves(_ from: BoardSpace) -> [BoardSpace]
+    func movePiece(_ from: BoardSpace, _ to: BoardSpace) -> Bool
+    func aiMove() -> Move
 }
 
 class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
@@ -43,10 +46,16 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         }
     }
 
-    func movePiece() {
-        
+    // Move a piece using coordinates from view, return true if successful
+    func movePiece(_ from: BoardSpace, _ to: BoardSpace) -> Bool {
+        let move = Move(from.model(), to.model())
+        let update = AnnuvinUpdate(move)
+        ai.gameModel!.apply(update)
+        displayState()
+        return true
     }
     
+    // get current game state
     func gameState() -> AnnuvinModel {
         return ai.gameModel as! AnnuvinModel
     }
@@ -64,6 +73,19 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         return translatedMoves
     }
     
+    func aiMove() -> Move {
+        let best = ai.bestMoveForActivePlayer() as! AnnuvinUpdate
+        return best.move
+    }
+    
+    // Log current game state to console, for testing
+    func displayState() {
+        let state = gameState()
+        let displayer = BoardDisplay()
+        let boardText = displayer.boardStringArray(state.position)
+        displayer.printBoard(boardText)
+        print("Player to move: " + String(describing: state.activePlayer!.playerId))
+    }
     
     override var shouldAutorotate: Bool {
         return true
