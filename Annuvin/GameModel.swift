@@ -38,7 +38,7 @@ class AnnuvinModel: NSObject, GKGameModel {
     //  For NSCopying protocol
     func copy(with zone: NSZone? = nil) -> Any {
         var new = AnnuvinModel(position: position, players: players)
-        new.piecesLeft = [totalPieces, totalPieces]
+        new.piecesLeft = piecesLeft
         new.movingPiece = movingPiece
         new.movesLeft = movesLeft
         new.activePlayer = activePlayer

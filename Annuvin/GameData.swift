@@ -5,7 +5,7 @@
 //  Created by Jeffrey Roy on 2/17/18.
 //  Copyright © 2018 Jeffrey Roy. All rights reserved.
 //
-//  Defines structures for storage of game date
+//  Defines structures for storage of game data
 
 import Foundation
 
@@ -61,9 +61,7 @@ extension BoardSpace {
     public init(_ x: Int, _ y: Int) {
         self.init(x: x, y: y)
     }
-    //    public static func + (left: BoardSpace, right: BoardSpace) -> BoardSpace {
-    //        return BoardSpace(x: left.x + right.x, y: left.y + right.y)
-    //    }
+
     public static func == (left: BoardSpace, right: BoardSpace) -> Bool {
         return left.x == right.x && left.y == right.y
     }
@@ -112,9 +110,19 @@ extension Move {
     public init(_ f: BoardSpace, _ t: BoardSpace) {
         self.init(from: f, to: t)
     }
+    public static func == (left: Move, right: Move) -> Bool {
+        return left.from == right.from && left.to == right.to
+    }
+    public func view() -> Move {
+        return Move(from: self.from.view(), to: self.to.view())
+    }
+    public func model() -> Move {
+        return Move(from: self.from.model(), to: self.to.model())
+    }
 }
 
 //MARK: Text representation of Annuvin board (for testing)
+// For general use, initialize with list of symbols as argument
 class BoardDisplay {
     
     let symbols: [Character] = ["-", ".", "X", "O"]
@@ -165,4 +173,6 @@ class BoardDisplay {
         }
     }
 }
+
+
 

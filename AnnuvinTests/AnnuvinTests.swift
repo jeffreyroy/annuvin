@@ -38,13 +38,25 @@ class AnnuvinTests: XCTestCase {
         let b = BoardSpace(x: 3, y: 3)
         let c = BoardSpace(x: 0, y: 3)
         let d = BoardSpace(x: 1, y: 0)
+        var e: BoardSpace
 
         XCTAssertEqual(a.distance(c), 1, "Distance not calculated correctly")
         XCTAssertEqual(a.distance(b), 3, "Distance not calculated correctly")
-        XCTAssertTrue(a.view() == d, "Conversion from model to view is incorrect")
-        XCTAssertTrue(d.model() == a, "Conversion from view to model is incorrect")
+        XCTAssertTrue(a.view() == d, "BoardSpace view is incorrect")
+        XCTAssertTrue(d.model() == a, "BoardSpace model is incorrect")
+        for x in 0...4 {
+            for y in 0...4 {
+                e = BoardSpace(x, y)
+                XCTAssertTrue(e.model().view() == e.view().model(), "Boardspace view() and model() are not commutative")
+            }
+        }
 
 
+    }
+    
+    func testMove() {
+        let newMove = Move(BoardSpace(1, 0), BoardSpace(0, 1))
+        XCTAssertTrue(move.view() == newMove, "Move view() is not correct")
     }
     
     func testPosition() {
@@ -121,15 +133,37 @@ class AnnuvinTests: XCTestCase {
         ai.maxLookAheadDepth = 1
         //ai.randomSource = GKARC4RandomSource()
         ai.gameModel = testModel
+        let humanMove = ai.bestMoveForActivePlayer() as! AnnuvinUpdate
+        XCTAssertNotNil(humanMove, "AI returns no move for human")
+        testModel.apply(testUpdate)
         let aiMove = ai.bestMoveForActivePlayer() as! AnnuvinUpdate
-        XCTAssertNotNil(aiMove, "AI returns no move")
-        
+        XCTAssertNotNil(aiMove, "AI returns no move for AI")
     }
+    
+    func testGamePlay() {
+        let ai = GKMinmaxStrategist()
+        ai.maxLookAheadDepth = 1
+        ai.gameModel = testModel
+        var count = 0
+        while !ai.gameModel!.isWin!(for: ai.gameModel!.activePlayer!) &&  !ai.gameModel!.isLoss!(for: ai.gameModel!.activePlayer!) && count < 30 {
+            let aiMove = ai.bestMoveForActivePlayer()
+            if aiMove != nil {
+                ai.gameModel!.apply(aiMove!)
+            }
+            count += 1
+        }
+        XCTAssertTrue(count < 30, "Game not complete in 30 moves")
+    }
+    
     
     func testPerformanceExample() {
         // This is an example of a performance test case.
+        let ai = GKMinmaxStrategist()
+        ai.maxLookAheadDepth = 3
+        ai.gameModel = testModel
         self.measure {
             // Put the code you want to measure the time of here.
+            _ = ai.bestMoveForActivePlayer()
         }
     }
     
