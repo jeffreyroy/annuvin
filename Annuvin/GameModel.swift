@@ -126,7 +126,13 @@ class AnnuvinModel: NSObject, GKGameModel {
             return []
         }
         // Loop through all spaces on board
-        for (y, row) in position.enumerated() {
+        // For testing, allow computer only forward moves
+        // until captures start
+        // (Normally, "lowerBound" should always be zero
+        let forward = min(piece.y + 1, 4)
+        let lowerBound = (player.playerId == 1 && piecesLeft[1] == 4) ? forward : 0
+        for y in lowerBound...4 {
+            let row = position[y]
             for (x, value) in row.enumerated() {
                 // Check whether destination is in range
                 if piece.distance(BoardSpace(x, y)) <= totalMoves(player) {

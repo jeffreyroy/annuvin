@@ -37,7 +37,7 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         let gameScene = scene as! GameScene
         gameScene.gameDelegate = self
         // Initialize ai
-        ai.maxLookAheadDepth = 5
+        ai.maxLookAheadDepth = 7
         ai.gameModel = gameStart.copy() as! AnnuvinModel
         //ai.randomSource = GKARC4RandomSource()
         // Load the SKScene from 'GameScene.sks'
@@ -83,12 +83,17 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         return translatedMoves
     }
     
-    // Move a piece using coordinates from view, return true if successful
+    // Move a piece using coordinates from view, return true if piece can
+    // make additional captures
     func movePiece(_ move: Move) -> Bool {
-        let update = AnnuvinUpdate(move.model())
+        let m = move.model()
+        let f = String(describing: [m.from.y, m.from.x])
+        let t = String(describing: [m.to.y, m.to.x])
+        let update = AnnuvinUpdate(m)
+        print ("Moving from " + f + " to " + t)
         ai.gameModel!.apply(update)
         displayState()
-        return true
+        return gameState().movingPiece != nil
     }
     
     // Return best move for ai
