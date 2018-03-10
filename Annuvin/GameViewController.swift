@@ -10,12 +10,20 @@ import UIKit
 import SpriteKit
 import GameplayKit
 
+// Protocol to allow view to delegate gameplay functions to controller
 protocol GameDelegate: class {
+    func resetGame()
+    func gameState() -> AnnuvinModel
+    func piecesFor(_ playerId: Int ) -> [BoardSpace]
     func legalMoves(_ from: BoardSpace) -> [BoardSpace]
+    func movePiece(_ move: Move) -> Bool
+    func aiMove() -> Move
+    func winner() -> Int?
 }
 
+// MARK: View controller
 class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
-
+    // MARK: Initialization
     let scene = SKScene(fileNamed: "GameScene")!
     @IBOutlet weak var gameView: SKView!
     
@@ -29,13 +37,11 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         let gameScene = scene as! GameScene
         gameScene.gameDelegate = self
         // Initialize ai
-        ai.maxLookAheadDepth = 2
-        ai.gameModel = gameStart
+        ai.maxLookAheadDepth = 7
+        ai.gameModel = gameStart.copy() as! AnnuvinModel
         //ai.randomSource = GKARC4RandomSource()
-
-        
+        // Load the SKScene from 'GameScene.sks'
         if let view = self.view as! SKView? {
-            // Load the SKScene from 'GameScene.sks'
             view.presentScene(scene)
             view.ignoresSiblingOrder = true
             view.showsFPS = true
@@ -43,12 +49,25 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         }
     }
 
-    func movePiece() {
-        
-    }
+    // MARK: Delegated functions
     
+    // Reset game to initial position
+    func resetGame() {
+        print("Resetting game...")
+        ai.gameModel = gameStart.copy() as! AnnuvinModel
+    }
+
+    
+    // get current game state
     func gameState() -> AnnuvinModel {
         return ai.gameModel as! AnnuvinModel
+    }
+    
+    // Return list of pieces for a player
+    func piecesFor(_ playerId: Int) -> [BoardSpace] {
+        let player = gameState().players![playerId]
+        let pieceList = gameState().piecesFor(player)
+        return pieceList.map { $0.view() }
     }
     
     // Return set of legal destinations for piece
@@ -59,11 +78,59 @@ class GameViewController: UIViewController, SKSceneDelegate, GameDelegate {
         let capturesOnly = state.movingPiece != nil
         // Get moves from model
         let moves = state.getDestinations(player, space, capturesOnly)
-        // TBA
+        // Convert to view format
         let translatedMoves = moves.map { $0.view() }
         return translatedMoves
     }
     
+    // Move a piece using coordinates from view, return true if piece can
+    // make additional captures
+    func movePiece(_ move: Move) -> Bool {
+        let m = move.model()
+        let f = String(describing: [m.from.y, m.from.x])
+        let t = String(describing: [m.to.y, m.to.x])
+        let update = AnnuvinUpdate(m)
+        print ("Moving from " + f + " to " + t)
+        ai.gameModel!.apply(update)
+        displayState()
+        return gameState().movingPiece != nil
+    }
+    
+    // Return best move for ai
+    func aiMove() -> Move {
+        let best = ai.bestMoveForActivePlayer() as! AnnuvinUpdate
+        return best.move.view()
+    }
+    
+    // Return winner if game is over, otherwise nil
+    func winner() -> Int? {
+        for playerId in [0, 1] {
+            let player = gameState().players![playerId]
+            if gameState().isWin(for: player) {
+                return playerId
+            }
+        }
+        return nil
+    }
+
+    
+    // Log current game state to console, for testing
+    func displayState() {
+        let state = gameState()
+        let displayer = BoardDisplay()
+        let player = state.activePlayer!
+        let boardText = displayer.boardStringArray(state.position)
+        displayer.printBoard(boardText)
+        print("Player to move: " + String(describing: player.playerId))
+        print("Pieces left: " + String(describing: state.piecesLeft))
+        if state.movingPiece != nil {
+            let p = state.movingPiece!
+            print("Moving piece: " + String(describing: [p.y, p.x]))
+            print("Moves left: " + String(describing: state.movesLeft))
+
+        }
+//        print("Pieces available: " + String(describing: state.piecesFor(player)))
+    }
     
     override var shouldAutorotate: Bool {
         return true

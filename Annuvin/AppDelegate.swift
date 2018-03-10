@@ -13,10 +13,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        // Reset app to initial state when testing UI
+        if CommandLine.arguments.contains("--uitesting") {
+            resetState()
+        }
         return true
+    }
+        
+    func resetState() {
+        // TBA: Reset any saved info to original state (e.g. clear databases)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

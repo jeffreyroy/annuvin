@@ -9,34 +9,59 @@
 import SpriteKit
 import GameplayKit
 
+// Class to represent piece on the board
+//class GamePiece {
+//    var sprite: SKSpriteNode
+//    var location: BoardSpace
+//    var playerId: Int
+//    var name: String
+//    init(_ name: String, _ sprite: SKSpriteNode, playerId: Int, _ location: BoardSpace) {
+//        self.name = name
+//        self.sprite = sprite
+//        self.playerId = playerId
+//        self.location = location
+//    }
+//}
 
-
+let emoji: [String: String] = ["neutral": "🙂", "happy": "😀", "sad": "😟", "thinking": "🤔", "confused": "😯"]
 
 class GameScene: SKScene {
     // Delegate game logic to view controller
     weak var gameDelegate: GameDelegate?
     // Use premade tile set for testing
     let tileSet = SKTileSet(named: "Sample Hexagonal Tile Set")
+    let animationDuration = 0.2  // Duration of move animation
     var readyForInput: Bool = false
     var activePiece: SKSpriteNode? = nil
+    var pieces: [SKSpriteNode] = []
     
     func gameBoard() -> SKTileMapNode {
         return childNode(withName: "hexBoard") as! SKTileMapNode
     }
     
+    func activePlayer() -> Int {
+        return gameDelegate!.gameState().activePlayer!.playerId
+    }
+    
     // Initialize game when view loads
     override func didMove(to view: SKView) {
 //        addPiece(2, 2, 0)
-        setBlurb("Ready!")
+        resetBoard()
+        setBlurb("Your move!", "neutral")
         readyForInput = true
     }
     
-    // MARK: Adding and removing pieces
+    // MARK: Add and remove pieces
     func addPiece(_ row: Int, _ column: Int, _ player: Int) {
-        let board = gameBoard()
-        let man = createPiece(0)
-        man.position = board.centerOfTile(atColumn: column, row: row)
-        board.addChild(man)
+        let man = createPiece(player)
+        centerPieceAt(man, row, column)
+        pieces.append(man)
+        gameBoard().addChild(man)
+    }
+    
+    func centerPieceAt(_ piece: SKSpriteNode,_ row: Int, _ column: Int) {
+        piece.position = gameBoard().centerOfTile(atColumn: column, row: row)
+        piece.userData!["location"] = BoardSpace(column, row)
     }
     
     func createPiece(_ player: Int) -> SKSpriteNode {
@@ -52,61 +77,31 @@ class GameScene: SKScene {
         return man
     }
     
-    // MARK: Get touch input
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        let touch = touches.first
-        if  touch != nil && readyForInput {
-            let node = interpret(touch!)
-            if let name = node.name {
-                // Piece touched
-                if name == "man" {
-                    let piece = node as! SKSpriteNode
-                    if activePiece == piece {
-                        deactivatePiece(piece)
-                    }
-                    activatePiece(piece)
-                }
-                // Empty board space touched
-                if name == "hexBoard" {
-                    let board = node as! SKTileMapNode
-                    if activePiece != nil {
-                        touchBoard(touch!, board)
-//                        makeMove(touch!, board, activePiece!)
-                    }
-                }
-            }
-        }
+    func removePiece(_ piece: SKSpriteNode) {
+        let i = pieces.index(of: piece)
+        if i != nil { pieces.remove(at: i!) }
+        piece.removeFromParent()
     }
     
-    // Return node being touched
-    func interpret(_ touch: UITouch) -> SKNode {
-        let pos = touch.location(in: self)
-        let selectedNode = self.atPoint(pos)
-        return selectedNode
-    }
-    
-    func activatePiece(_ piece: SKSpriteNode) {
-        if activePiece != nil {
-            deactivatePiece(activePiece!)
-        }
-        activePiece = piece
-        let location = boardLocation(piece)
-        let moves = gameDelegate?.legalMoves(location)
-        if moves!.count > 0 {
-            for m in moves! {
-                recolor(m.y, m.x, 0)
-            }
-        }
-        else { setBlurb("No moves!")}
-        highlight(piece)
-    }
-    
-    func deactivatePiece(_ piece: SKSpriteNode) {
+    func resetBoard() {
         unhighlightBoard()
-        activePiece = nil
-        unHighlight(piece)
+        // loop through pieces array, deleting all sprites
+        let sprites = gameBoard().children
+        for sprite in sprites {
+            let piece = sprite as! SKSpriteNode
+            removePiece(piece)
+        }
+        gameDelegate?.resetGame()
+        // Add new sprites
+        for playerId in [0,1] {
+            let pieceLocations = gameDelegate?.piecesFor(playerId)
+            for l in pieceLocations! {
+                addPiece(l.y, l.x, playerId)
+            }
+        }
     }
     
+    // MARK:  Highlight moves
     func highlight(_ piece: SKSpriteNode) {
         piece.color = UIColor.red
         piece.colorBlendFactor = 0.5
@@ -122,31 +117,22 @@ class GameScene: SKScene {
         board.setTileGroup(tileSet?.tileGroups[color], forColumn: column, row: row)
     }
     
+    func highlighted(_ b: BoardSpace) -> Bool {
+        let color = gameBoard().tileGroup(atColumn: b.x, row: b.y)
+        return color == tileSet?.tileGroups[0]
+    }
+    
     func unhighlightBoard() {
-        for row in 0..<4 {
-            for column in 0..<4 {
-                recolor(row, column, 1)
-                // do something to the SKTileDefinition
+        for row in 0...4 {
+            for column in 0...4 {
+                let tile = BoardSpace(column, row)
+                if highlighted(tile){ recolor(row, column, 1) }
+//                recolor(row, column, 1)
             }
         }
     }
     
-    func makeMove(_ touch: UITouch, _ board: SKTileMapNode, _ piece: SKSpriteNode) {
-    
-    }
-    
-//    // Piece touched
-//    func touchPiece(_ piece: SKSpriteNode) {
-//        let blurbNode = childNode(withName: "blurb")
-//        if let blurb = blurbNode as? SKLabelNode {
-//            if let d = piece.userData {
-//                blurb.text = String(describing: d["playerId"]!)
-//            }
-//        }
-//        piece.removeFromParent()
-//    }
-    
-    // Get space containing specific piece on board
+    // MARK:  Translate touches into board coordinates
     func boardLocation(_ piece: SKSpriteNode) -> BoardSpace {
         let p = piece.position
         return coordinates(p)
@@ -159,20 +145,195 @@ class GameScene: SKScene {
         return BoardSpace(x, y)
     }
     
+    func pieceAt(_ space: BoardSpace) -> SKSpriteNode? {
+        for piece in pieces {
+            let location = piece.userData!["location"] as! BoardSpace
+            if  location == space { return piece }
+        }
+        return nil
+    }
+    
+    // MARK: Get touch input
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        let touch = touches.first
+        if  touch != nil && readyForInput {
+            let node = interpret(touch!)
+            // Check what's been touched
+            if let name = node.name {
+                // Piece touched
+                if name == "man" {
+                    let piece = node as! SKSpriteNode
+                    touchPiece(piece)
+                }
+                // Empty board space touched
+                if name == "hexBoard" {
+                    let board = node as! SKTileMapNode
+                    if activePiece != nil {
+                        touchBoard(touch!, board)
+//                        makeMove(touch!, activePiece!)
+                    }
+                }
+                // TBA: Need to add reset button
+                if name == "button" {
+                    let piece = node as! SKSpriteNode
+                    piece.color = UIColor.red
+                    piece.colorBlendFactor = 0.5
+                    resetBoard()
+                }
+            }
+        }
+    }
+    
+    // Return node being touched
+    func interpret(_ touch: UITouch) -> SKNode {
+        let pos = touch.location(in: self)
+        let selectedNode = self.atPoint(pos)
+        return selectedNode
+    }
+    
+    func touchPiece(_ piece: SKSpriteNode) {
+        let owner = piece.userData!["playerId"] as! Int
+        // If player's piece, activate it
+        if owner == 0 {
+            if activePiece == piece {
+                deactivatePiece(piece)
+            }
+            activatePiece(piece)
+        }
+        // If ai's piece, treat as an attempt to capture
+        else {
+            if activePiece != nil {
+                let location = boardLocation(piece)
+                touchTile(location, piece)
+            }
+        }
+    }
+    
+    func activatePiece(_ piece: SKSpriteNode) {
+        if activePiece != nil {
+            deactivatePiece(activePiece!)
+        }
+        activePiece = piece
+        let location = boardLocation(piece)
+        let moves = gameDelegate?.legalMoves(location)
+        if moves!.count > 0 {
+            for m in moves! {
+                recolor(m.y, m.x, 0)
+            }
+        }
+        else { setBlurb("No moves!", "confused")}
+        highlight(piece)
+    }
+    
+    func deactivatePiece(_ piece: SKSpriteNode) {
+        unhighlightBoard()
+        activePiece = nil
+        unHighlight(piece)
+    }
+    
     // Empty board position touched
     func touchBoard(_ touch: UITouch, _ board: SKTileMapNode) {
         // Get location on board
         let p = touch.location(in: board)
         let b = coordinates(p)
-        displayCoordinates(b)
-        recolor(b.y, b.x, 0)
+        touchTile(b, nil)
+    }
+    
+    func touchTile(_ b: BoardSpace, _ capturedPiece: SKSpriteNode? ) {
+        if highlighted(b) && activePiece != nil {
+            unhighlightBoard()
+            print ("Attempting to move to " + String(describing: [b.y, b.x]))
+            makeMove(b, activePiece!, capturedPiece)
+            // Need to check whether game is won for player
+            _ = checkForWin()
+            if activePlayer() == 1 && gameDelegate!.winner() == nil {
+                setBlurb("Thinking...", "thinking")
+                readyForInput = false
+                //  Wait until animation is complete
+                DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+                        self.AIMove()
+                        _ = self.checkForWin()
+                    }
+            }
+//            AIMove()
+//            checkForWin()
+        }
+    }
+    
+    func checkForWin() -> Bool {
+        let winner = gameDelegate!.winner()
+        if  winner != nil {
+            win(winner!)
+            return true
+        }
+        return false
+    }
+    
+    // Get AI moves and make them
+    func AIMove() {
+        // Need to check whether game is won for AI
+        while activePlayer() == 1 && gameDelegate!.winner() == nil {
+            let move = gameDelegate?.aiMove()
+            let piece = pieceAt(move!.from)
+            let capturedPiece = pieceAt(move!.to)
+            // Need to delay 0.2 sec before making move
+            makeMove(move!.to, piece!, capturedPiece)
+        }
+        setBlurb("Your move!", "neutral")
+        readyForInput = true
+    }
+    
+    func makeMove(_ to: BoardSpace, _ piece: SKSpriteNode, _ capturedPiece: SKSpriteNode? ) {
+        // Get coordinates of starting and ending position
+        let from = boardLocation(piece)
+//        let to = coordinates(touch.location(in: board))
+        // Try making the move in the model
+        let moreMoves = gameDelegate!.movePiece(Move(from, to))
+        if moreMoves {
+            activePiece = piece
+        }
+        else {
+            deactivatePiece(piece)
+        }
+        centerPieceAt(piece, to.y, to.x)
+//            animateMove(piece, to)
+        if capturedPiece != nil {
+//                animateCapture(capturedPiece!)
+            removePiece(capturedPiece!)
+        }
+    }
+    
+    func animateMove(_ piece: SKSpriteNode, _ to: BoardSpace ) {
+        piece.userData!["location"] = to
+        let destination = gameBoard().centerOfTile(atColumn: to.x, row: to.y)
+        let moveAnimation = SKAction.move(to: destination, duration: animationDuration)
+        piece.run(moveAnimation)
+    }
+    
+    func animateCapture(_ piece: SKSpriteNode) {
+        let fadeAnimation = SKAction.fadeOut(withDuration: animationDuration)
+        let shrinkAnimation = SKAction.resize(toWidth: 0.0, height: 0.0, duration: animationDuration)
+        piece.run(shrinkAnimation)
+        piece.run(fadeAnimation)
+    }
+    
+    // Indicate winner
+    func win(_ playerId: Int) {
+        if playerId == 0 {
+            setBlurb("You win!", "sad")
+        }
+        else {
+            setBlurb("I win!", "happy")
+        }
+        readyForInput = false
     }
     
     // MARK: Display information for testing
-    func setBlurb(_ s: String) {
+    func setBlurb(_ text: String, _ mood: String? = nil) {
         let blurbNode = childNode(withName: "blurb")
+        let face = mood != nil && emoji[mood!] != nil ? emoji[mood!]! : ""
         if let blurb = blurbNode as? SKLabelNode {
-            blurb.text = s
+            blurb.text = face + " " + text
         }
     }
     

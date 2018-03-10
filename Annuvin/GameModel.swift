@@ -38,7 +38,7 @@ class AnnuvinModel: NSObject, GKGameModel {
     //  For NSCopying protocol
     func copy(with zone: NSZone? = nil) -> Any {
         var new = AnnuvinModel(position: position, players: players)
-        new.piecesLeft = [totalPieces, totalPieces]
+        new.piecesLeft = piecesLeft
         new.movingPiece = movingPiece
         new.movesLeft = movesLeft
         new.activePlayer = activePlayer
@@ -126,7 +126,13 @@ class AnnuvinModel: NSObject, GKGameModel {
             return []
         }
         // Loop through all spaces on board
-        for (y, row) in position.enumerated() {
+        // For testing, allow computer only forward moves
+        // until captures start
+        // (Normally, "lowerBound" should always be zero
+        let forward = min(piece.y + 1, 4)
+        let lowerBound = (player.playerId == 1 && piecesLeft[1] == 4) ? forward : 0
+        for y in lowerBound...4 {
+            let row = position[y]
             for (x, value) in row.enumerated() {
                 // Check whether destination is in range
                 if piece.distance(BoardSpace(x, y)) <= totalMoves(player) {
@@ -200,16 +206,25 @@ class AnnuvinModel: NSObject, GKGameModel {
         let destination = move.to
         // print("Considering \(move)", terminator: "")
         let capture = movePiece(move)
-        // Note:  Need to check whether move is a capture
+        // Check whether move is a capture
         if capture {
             movingPiece = destination
             movesLeft -= piece.distance(destination)
+            let moreMoves = getDestinations(activePlayer!, movingPiece!, true)
+            // If no more moves available, end move
+            if moreMoves.count == 0 {
+                endMove()
+            }
         }
         else {
-            togglePlayer()
-            movingPiece = nil
-            movesLeft = totalMoves(activePlayer!)
+            endMove()
         }
+    }
+    
+    func endMove() {
+        togglePlayer()
+        movingPiece = nil
+        movesLeft = totalMoves(activePlayer!)
     }
     
 //    //  Undo move
